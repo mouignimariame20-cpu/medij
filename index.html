@@ -15,7 +15,7 @@
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script>
 <script src="data.js"></script>
 <script src="static-db.js"></script>
-<script>window.__BUILD="20261029200000";(function(){var busy=false;function chk(){if(busy||!navigator.onLine)return;busy=true;fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&j.v!==window.__BUILD){var k="rev-upd-"+j.v;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){}var p=[];if(window.caches)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(x){return caches.delete(x)}))}));if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.update()}))}));Promise.all(p).catch(function(){}).then(function(){location.reload()})}}).catch(function(){}).then(function(){busy=false})}addEventListener("load",chk);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
+<script>window.__BUILD="20261029201000";(function(){var busy=false;function chk(){if(busy||!navigator.onLine)return;busy=true;fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&j.v!==window.__BUILD){var k="rev-upd-"+j.v;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){}var p=[];if(window.caches)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(x){return caches.delete(x)}))}));if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.update()}))}));Promise.all(p).catch(function(){}).then(function(){location.reload()})}}).catch(function(){}).then(function(){busy=false})}addEventListener("load",chk);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 <title>MédiJ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -902,7 +902,7 @@ function deckCard(d,showJ=true){
     <div class="help">${(d.cards||[]).length} flashcards${dc?` · <strong>${dc} à revoir</strong>`:""} · ${(d.qcm||[]).length} QCM${d.lastScore!=null?` · dernier score ${d.lastScore}%`:""}</div>
   </button>`;
 }
-const DEF_PER="L3 · S5";
+const DEF_PER=(()=>{try{return localStorage.getItem("medij-per")||"L1 · S1"}catch(e){return "L1 · S1"}})();
 function perOf(d){return d.periode||DEF_PER}
 function curPer(){try{return (X.planning&&X.planning.per)||localStorage.getItem("medij-per")||DEF_PER}catch(e){return DEF_PER}}
 function perKey(p){const m=/S\s*(\d+)/i.exec(p);return m?+m[1]:99}
@@ -1390,6 +1390,8 @@ function onboard(){const o=$("#overlay");if(!o)return;
   <p class="help">Ajoute tes propres cours (PDF, PowerPoint, Word ou photos) : MédiJ les transforme en fiches, flashcards et QCM, puis te dit chaque jour quoi réviser grâce à la méthode des J (J1, J3, J7, J15, J30).</p>
   <p class="help">Ta progression et ton planning restent à toi, enregistrés sur cet appareil.</p>
   <label class="f">Ton prénom<input type="text" id="ob-name" autocomplete="given-name" placeholder="ex. Awa"></label>
+  <label class="f">Ton année d'études<select id="ob-year"><option value="">Choisis…</option>${[1,2,3,4,5,6,7].map(y=>`<option value="${y}">${y===1?"1re":y+"e"} année (${y<=3?"L"+y:y<=5?"M"+(y-3):"D"+(y-5)})</option>`).join("")}</select></label>
+  <label class="f">Ton semestre<select id="ob-sem"><option value="1">1er semestre de l'année</option><option value="2">2e semestre de l'année</option></select></label>
   <button class="btn" data-act="obgo">C'est parti</button></div></div>`}
 if(window.__STATIC&&window.__ONBOARD)setTimeout(onboard,900);
 
@@ -3339,7 +3341,9 @@ document.addEventListener("click",async e=>{
   const a=b.dataset.act,d=getDeck(S.deckId);
   switch(a){
     case "namesave":{const v=$("#pf-name").value.trim();try{localStorage.setItem("medij-prenom",v)}catch(e){}toast(v?"Bonjour "+v+" !":"Prénom retiré");render();break}
-    case "obgo":{const v=$("#ob-name").value.trim();if(!v){toast("Écris ton prénom");break}try{localStorage.setItem("medij-prenom",v)}catch(e){}
+    case "obgo":{const v=$("#ob-name").value.trim();if(!v){toast("Écris ton prénom");break}const yr=+($("#ob-year")?.value||0);if(!yr){toast("Choisis ton année d'études");break}
+      const sm=(yr-1)*2+(+($("#ob-sem")?.value||1)),per=(yr<=3?"L"+yr:yr<=5?"M"+(yr-3):"D"+(yr-5))+" · S"+sm;
+      try{localStorage.setItem("medij-prenom",v);localStorage.setItem("medij-per",per)}catch(e){}
       const o={};["edt","prieres","coran","batch"].forEach(k=>o[k]=!!$("#ob-"+k)?.checked);o.perso=!!$("#ob-perso")?.checked;
       window.__seedPlanning&&window.__seedPlanning(o);location.reload();break}
     case "simple":if(d)doSimple(d);break;
